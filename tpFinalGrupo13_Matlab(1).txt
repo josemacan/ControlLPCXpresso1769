@@ -1,0 +1,162 @@
+%-------------------------------------------+
+%           Comunicacion Serie - Sonar      +
+%-------------------------------------------+
+
+clear;close all;clc;
+delete(instrfind({'Port'},{'COM3'}));
+global buff;
+buff=8;
+global Modo;
+Modo=0;
+global s;
+s = serial('COM3');
+s.StopBits = 1;
+set(s,'BaudRate',9600);
+set(s,'Terminator','CR/LF');
+set(s,'inputBufferSize',buff);
+fopen(s);
+while(1)%Modo StandBy
+  valTx=input('----- Modo Standby -----\nManual : 1\nAutomático : 2\nSeguimiento : 3\nSalir : 255\nIngrese Modo Deseado : ');
+    if((valTx>=0 && valTx <= 3 )|| (valTx==255))
+                switch(valTx)
+                    case 0
+                        Modo=0;
+                        fwrite(s,200);
+                    case 1  
+                        Modo=1;
+                        fwrite(s,201);%Transmite el modo
+                        ManualMode
+                        
+                    case 2  
+                         Modo=2;
+                        fwrite(s,202);%Transmite el modo
+                        AutoMode
+                    case 3 
+                        Modo=3;                 
+                        fwrite(s,203);%Transmite el modo
+                        SeguiMode
+                    case 255
+                        break
+                end
+                    else
+                        disp("Comando Inválido")
+    end
+    
+end
+fclose(s);
+delete(s)
+clear s 
+
+function Plot
+global s;
+        Title0='Trabajo Final DIII : Sonar';
+points = 100; %numero de puntos en el plot
+data_period = 5; %período para lectura de datos[ms]
+%config intervalo entre puntos
+x = linspace(0,100, points);
+%inicializacion y en 0
+y = linspace(0,0,points);
+
+
+%close all open figures
+close ALL
+% draw a area graph with parameter x and y. Save the return value so we can
+% edit the graph later. You can use "plot" instead of "area", I just liked
+% the aspect better.
+figure;
+lh = area(x,y);
+% configuracion de límites del plot
+set(gcf,'NumberTitle','off')
+set(gcf,'Name',Title0)
+xlabel('N° de medicion');
+ylabel('Distancia [cm]');
+title('Medicion de distancia mediante sensor ultrasonido');
+shg; %trae la ventana al frente para visualizarla
+key = get(gcf,'CurrentKey');%obtengo la tecla presionada
+Distance=0;
+r=0;
+while ( strcmp(key,'q')==0) %mientras que la tecla no este presionada
+    key = get(gcf,'CurrentKey'); 
+    
+    %se bloquea hasta que haya aunque sea 1 byte para leer
+    %while s.BytesAvailable == 0 
+    %end
+    pause(0.025);
+    
+    %desplaza valores hacia la izquierda
+    for k = 1:1:points-1
+       y(k) = y(k+1);
+    end
+    
+    %lee la distancia y la agrega al plot
+    if(s.BytesAvailable == 1)
+    y(points) = fread(s,1);
+    Distance=y(points);
+    r=5;
+    else
+        if(r>0)
+             y(points)=Distance;
+            r=r-1;
+        else
+              y(points)=0;
+        end
+      
+    end
+    %guarda el valor de distancia
+    Distance = y(points);
+    % Acutaliza valor y
+    set(lh, 'YData',y);   
+    %actualiza el plot
+    drawnow;
+end
+end
+
+function ManualMode
+global Modo;
+global s;
+global buff;
+while (Modo==1)
+disp('----- Modo Manual -----')
+valTx=input('Ingrese el angulo deseado o 255 para salir : ');
+if(valTx<=180 && valTx >= 0)
+fwrite(s,valTx);%Transmite el ángulo
+disp('----- Presione q para cambiar el angulo -----')
+Plot
+else if(valTx==255)
+         Modo=0;
+        fwrite(s,200);
+       break 
+ else disp("Ángulo Inválido (0-180)")
+    end
+end
+end
+end
+
+function AutoMode
+global Modo;
+global s;
+global buff;
+disp('----- Modo Automático -----')
+disp('----- Presione q para salir -----')
+Plot
+fwrite(s,200);
+end
+
+function SeguiMode
+global Modo;
+global s;
+global buff;
+disp('----- Modo Seguimiento -----')
+while(1)
+valTx=input('Ingrese el angulo deseado o 255 para salir : ');
+if(valTx==255)
+break
+else
+    disp('Comando Inválido')
+end
+end
+fwrite(s,200);
+end
+
+
+

@@ -1,0 +1,22 @@
+% EJERCICIO 21
+
+clear all; 
+close all; clc;
+whos
+delete(instrfind({'Port'},{'COM5'}));
+dataType = 'string';    %'string','number'
+buff = 1;
+s = serial('COM5');
+set(s,'BaudRate',9600);
+%set(s,'BaudRate',115200);
+set(s,'Terminator','CR/LF');
+set(s,'InputBufferSize',buff);
+fopen(s);
+    while(1)
+    salida = fread(s);  
+    display(salida)
+    end
+fclose(s);
+delete(s)
+clear s
+

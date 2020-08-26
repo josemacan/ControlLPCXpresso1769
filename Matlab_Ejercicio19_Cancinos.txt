@@ -1,0 +1,37 @@
+% EJERCICIO 19: Valor entre 0 y 255;
+
+%--------------------
+%   Serial communication
+%---------------------
+
+clear all; 
+close all; clc;
+whos
+delete(instrfind({'Port'},{'COM5'}));
+dataType = 'number';    %'string','number'
+buff = 14;
+s = serial('COM5');
+s.Parity = ('odd'); %impar
+%s.Parity = ('even'); %par
+s.StopBits = 1;
+set(s,'BaudRate',115200);
+
+set(s,'Terminator','CR/LF');
+set(s,'InputBufferSize',buff);
+fopen(s);
+
+valTx = input('Ingrese el valor numerico: ');
+  if isnumeric(valTx) == 1            % validacion de tipo
+        if valTx <= 255 && valTx >= 0 % chequeo de rango
+        fwrite(s,valTx);            
+        else
+        disp('Rango numerico invalido')
+        end  
+  else
+            disp('No es un numero entero');          
+  end 
+  
+fclose(s);
+delete(s)
+clear s
+   
