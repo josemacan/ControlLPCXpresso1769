@@ -1,5 +1,3 @@
-// ALUMNO: CANCINOS, JOSÉ MARÍA
-
 int antirebote (int );
 int main (void)
 {
